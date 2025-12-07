@@ -4,7 +4,6 @@
 #include "Secrets/secrets.h"
 #include "ntrip.h"
 
-uint64_t dataCount = 0;
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -16,6 +15,8 @@ SemaphoreHandle_t connectionStateMutex;
 bool ntripConnected = false;
 int retryCount = 0;
 
+SemaphoreHandle_t dataCountMutex;
+uint64_t dataCount = 0;
 
 std::vector<String> splitString(const String& str, char delimiter) {
   std::vector<String> tokens;
@@ -55,13 +56,19 @@ void lcdUpdateTask(void* parameter) {
   uint64_t previousDataCount = 0;
   bool firstRun = true;
   for (;;) {
-    vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1 second
-    uint64_t currentDataCount = dataCount;
+
+
+    xSemaphoreTake(dataCountMutex, portMAX_DELAY);
+    const uint64_t currentDataCount = dataCount;
+    xSemaphoreGive(dataCountMutex);
+
     uint64_t dataRate = currentDataCount - previousDataCount;
     previousDataCount = currentDataCount;
 
+
     xSemaphoreTake(connectionStateMutex, portMAX_DELAY);
-    bool connected = ntripConnected;
+    const bool connected = ntripConnected;
+    const int retryCount = ::retryCount;
     xSemaphoreGive(connectionStateMutex);
 
     M5.Display.setTextSize(2);
@@ -81,11 +88,11 @@ void lcdUpdateTask(void* parameter) {
 
     if (connected) {
       M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
-      M5.Lcd.printf("NTRIP: Connected \n");
+      M5.Lcd.printf("NTRIP: Connected      \n");
       M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
     } else {
       M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
-      M5.Lcd.printf("NTRIP: NOK, r:  %d\n", retryCount);
+      M5.Lcd.printf("NTRIP: NOK, r: %d\n", retryCount);
       M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
     }
 
@@ -117,6 +124,7 @@ void lcdUpdateTask(void* parameter) {
       M5.Power.powerOff();
     }
     M5.update();
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
 
@@ -140,8 +148,11 @@ void healthCheckTask(void* parameter) {
 
   for (;;) {
     vTaskDelay(pdMS_TO_TICKS(2000)); // Delay for 2 seconds
-    // Implement health check logic if needed
-    uint64_t currentDataCount = dataCount;
+
+    xSemaphoreTake(dataCountMutex, portMAX_DELAY);
+    const uint64_t currentDataCount = dataCount;
+    xSemaphoreGive(dataCountMutex);
+
     uint64_t dataRate = currentDataCount - previousDataCount;
     previousDataCount = currentDataCount;
     // If no data received in last interval, consider connection lost
@@ -200,7 +211,13 @@ void setup() {
   M5.Lcd.print("NTRIP Client Running\n");
   delay(2000);
 
-  // Create LCD update task
+  // Create mutexes
+  ggaMutex = xSemaphoreCreateMutex();
+  connectionStateMutex = xSemaphoreCreateMutex();
+  dataCountMutex = xSemaphoreCreateMutex();
+
+  // Task creations
+
   xTaskCreate(
     lcdUpdateTask,        // Task function
     "LCD Update Task",    // Name of the task
@@ -210,8 +227,7 @@ void setup() {
     NULL                  // Task handle
   );
 
-  // Create GGA read task
-  ggaMutex = xSemaphoreCreateMutex();
+
   xTaskCreate(
     ggaReadTask,          // Task function
     "GGA Read Task",      // Name of the task
@@ -231,13 +247,11 @@ void setup() {
     NULL                  // Task handle
   );
 
-  connectionStateMutex = xSemaphoreCreateMutex();
-
 }
 
-
 void loop() {  
-  //raise mutex 
+
+  //raise mutex for connection state
   xSemaphoreTake(connectionStateMutex, portMAX_DELAY);
   ntripConnected = ntrip::is_ntrip_connected();
   xSemaphoreGive(connectionStateMutex);
@@ -247,11 +261,16 @@ void loop() {
     Serial.println("NTRIP connection lost. Reconnecting...");
     if (ntrip::connect_ntrip_client()) {
       Serial.println("Reconnected to NTRIP server.");
+      xSemaphoreTake(connectionStateMutex, portMAX_DELAY);
       retryCount = 0;
+      ntripConnected = true;
+      xSemaphoreGive(connectionStateMutex);
       ntrip::authenticate_ntrip_client();
     } else {
       Serial.println("Reconnection to NTRIP server failed.");
+      xSemaphoreTake(connectionStateMutex, portMAX_DELAY);
       retryCount++;
+      xSemaphoreGive(connectionStateMutex);
       delay(200); // wait before retrying
       return;
     }
@@ -261,7 +280,9 @@ void loop() {
     size_t len = ntrip::get_wifi_client().read(buffer, sizeof(buffer));
     // write to Serial for debugging
     Serial2.write(buffer, len);
+    xSemaphoreTake(dataCountMutex, portMAX_DELAY);
     dataCount += len; 
+    xSemaphoreGive(dataCountMutex);
   }
   // every 5 sec  report gga to caster
   static uint32_t lastGGAReport = 0;
