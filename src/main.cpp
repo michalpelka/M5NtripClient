@@ -32,20 +32,20 @@ std::vector<String> splitString(const String& str, char delimiter) {
   return tokens;
 }
 
-int GGAQualityToColor(const char ggaQ) {
-  if (ggaQ == '0') {
+int GGAQualityToColor(const char ggaQuality) {
+  if (ggaQuality == '0') {
     return TFT_RED; // Invalid
   } 
-  if (ggaQ == '1') {
+  if (ggaQuality == '1') {
     return TFT_YELLOW; // GPS fix
   } 
-  if (ggaQ == '2') {
+  if (ggaQuality == '2') {
     return TFT_CYAN; // DGPS fix
   } 
-  if (ggaQ == '4') {
+  if (ggaQuality == '4') {
     return TFT_GREEN; // RTK Fixed or RTK Float
   } 
-  if (ggaQ == '5') {
+  if (ggaQuality == '5') {
     return TFT_GREENYELLOW; // RTK Fixed or RTK Float
   }
   return TFT_WHITE; // Unknown quality
