@@ -1,3 +1,6 @@
+#ifndef NTRIP_H
+#define NTRIP_H
+
 #include <string>
 #include <WiFi.h>
 #include "base64.h"
@@ -129,3 +132,5 @@ namespace ntrip {
  
 
 }
+
+#endif
