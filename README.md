@@ -226,6 +226,7 @@ This project is licensed under the GNU General Public License v2.0 - see the [LI
 - Built with [M5Unified](https://github.com/m5stack/M5Unified) library
 - Uses PlatformIO development platform
 - Implements NTRIP protocol for RTK corrections (custom implementation following NTRIP v1.0 specification)
+- Utilizes [Base64.c](https://github.com/joedf/base64.c) library
 
 ## Author
 
