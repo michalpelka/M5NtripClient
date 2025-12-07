@@ -1,5 +1,4 @@
 # M5NtripClient
-
 [![PlatformIO CI](https://github.com/michalpelka/M5NtripClient/actions/workflows/build.yml/badge.svg)](https://github.com/michalpelka/M5NtripClient/actions/workflows/build.yml)
 
 A portable NTRIP (Networked Transport of RTCM via Internet Protocol) client for M5Stack devices that receives RTK correction data from NTRIP casters and forwards it to u-blox GNSS receivers for high-precision positioning.
