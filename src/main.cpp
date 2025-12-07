@@ -261,7 +261,7 @@ void loop() {
     Serial2.write(buffer, len);
     dataCount += len; 
   }
-  // evry 5 sec  report gga to caster
+  // every 5 sec  report gga to caster
   static uint32_t lastGGAReport = 0;
   if (millis() - lastGGAReport > 5000) {
     lastGGAReport = millis();
