@@ -41,6 +41,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install platformio
     
+    - name: Create dummy secrets.h
+      run: |
+        mkdir -p include/Secrets
+        cp include/Secrets/secrets.h.template include/Secrets/secrets.h
+    
     - name: Build PlatformIO Project
       run: pio run
     
