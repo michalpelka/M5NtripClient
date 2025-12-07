@@ -14,6 +14,7 @@ SemaphoreHandle_t ggaMutex;
 String ggaSentence = "";
 SemaphoreHandle_t connectionStateMutex;
 bool ntripConnected = false;
+SemaphoreHandle_t retryCountMutex;
 int retryCount = 0;
 
 
@@ -85,7 +86,10 @@ void lcdUpdateTask(void* parameter) {
       M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
     } else {
       M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
-      M5.Lcd.printf("NTRIP: NOK, r:  %d\n", retryCount);
+      xSemaphoreTake(retryCountMutex, portMAX_DELAY);
+      int currentRetryCount = retryCount;
+      xSemaphoreGive(retryCountMutex);
+      M5.Lcd.printf("NTRIP: NOK, r:  %d\n", currentRetryCount);
       M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
     }
 
@@ -230,6 +234,7 @@ void setup() {
   );
 
   connectionStateMutex = xSemaphoreCreateMutex();
+  retryCountMutex = xSemaphoreCreateMutex();
 
 }
 
@@ -245,11 +250,15 @@ void loop() {
     Serial.println("NTRIP connection lost. Reconnecting...");
     if (ntrip::connect_ntrip_client()) {
       Serial.println("Reconnected to NTRIP server.");
+      xSemaphoreTake(retryCountMutex, portMAX_DELAY);
       retryCount = 0;
+      xSemaphoreGive(retryCountMutex);
       ntrip::authenticate_ntrip_client();
     } else {
       Serial.println("Reconnection to NTRIP server failed.");
+      xSemaphoreTake(retryCountMutex, portMAX_DELAY);
       retryCount++;
+      xSemaphoreGive(retryCountMutex);
       delay(200); // wait before retrying
       return;
     }
