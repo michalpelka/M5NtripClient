@@ -96,7 +96,7 @@ namespace ntrip {
             auth_b64 = _make_auth_string(ntrip_config.username, ntrip_config.password);
         }
 
-        // test
+        // Build and send NTRIP authentication request
         const auto request = buildNtripRequest();
         Serial.println("NTRIP Request:");
         Serial.println(request.c_str());  
