@@ -1,4 +1,7 @@
 # M5NtripClient
+
+[![PlatformIO CI](https://github.com/michalpelka/M5NtripClient/actions/workflows/build.yml/badge.svg)](https://github.com/michalpelka/M5NtripClient/actions/workflows/build.yml)
+
 M5 Ntrip client 
 
 <img width="512" alt="image" src="https://github.com/user-attachments/assets/a1ea2a27-c1ac-4ee5-af3a-5710f57d494f" />
