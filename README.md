@@ -18,6 +18,11 @@ M5 Ntrip client
 | 17     | RXD2    |
 
 ## Ucenter settings 
+You need to configure Ublox reciever:
+- accept RTCM on RXD2
+- send GGA (only) to TXD2
+- set baudrate to 115200
+![ZED-F9R config](./p9r+m5stack.ucf)
 
 <img width="718" height="530" alt="image" src="https://github.com/user-attachments/assets/c13e79e1-3609-4edf-ac70-8589c43be128" />
 
