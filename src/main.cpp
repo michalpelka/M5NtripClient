@@ -129,6 +129,8 @@ void ggaReadTask(void* parameter) {
         ggaSentence = gga;
         xSemaphoreGive(ggaMutex);
       }
+    } else {
+      vTaskDelay(pdMS_TO_TICKS(10)); // Add a small delay to prevent busy-wait
     }
   }
 }
