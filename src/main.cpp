@@ -132,7 +132,7 @@ void ggaReadTask(void* parameter) {
   for (;;) {
     if (Serial2.available()) {
       String gga = Serial2.readStringUntil('\n');
-      if (gga.startsWith("$GPGGA")) {
+      if (gga.startsWith("$GPGGA") || gga.startsWith("$GNGGA")|| gga.startsWith("$GLGGA")) {
         xSemaphoreTake(ggaMutex, portMAX_DELAY);
         ggaSentence = gga;
         xSemaphoreGive(ggaMutex);
