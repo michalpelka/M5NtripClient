@@ -67,7 +67,36 @@ git clone https://github.com/michalpelka/M5NtripClient.git
 cd M5NtripClient
 ```
 
-### 2. Configure Secrets
+### 2. Configure Settings
+
+You can configure WiFi and NTRIP settings using either:
+
+#### Option A: SD Card Configuration (Recommended)
+
+Create a configuration file on your SD card:
+
+```bash
+cp config.txt.template config.txt
+```
+
+Edit `config.txt` with your actual credentials and copy it to the root of your SD card:
+
+```ini
+# WiFi Settings
+WIFI_SSID=your_wifi_ssid
+WIFI_PASSWORD=your_wifi_password
+
+# NTRIP Settings
+NTRIP_HOST=ntrip.example.com
+NTRIP_PORT=2101
+NTRIP_MOUNTPOINT=MOUNTPOINT
+NTRIP_USERNAME=username
+NTRIP_PASSWORD=password
+```
+
+**Advantages**: Easy to update without recompiling, swap between different configurations by changing SD cards.
+
+#### Option B: Compile-time Configuration (Fallback)
 
 Create a secrets header file with your WiFi and NTRIP credentials:
 
@@ -88,6 +117,8 @@ namespace secrets {
     const char* NTRIP_PASSWORD = "password";          // NTRIP password
 }
 ```
+
+**Note**: The device will automatically use SD card configuration if available, otherwise it falls back to `secrets.h`.
 
 ### 3. Configure u-blox Receiver
 
@@ -120,14 +151,24 @@ Or use the PlatformIO IDE interface to build and upload.
 
 ## Usage
 
+### Preparing the SD Card (Optional but Recommended)
+
+1. Format a microSD card as FAT32
+2. Create a file named `config.txt` in the root directory
+3. Copy your configuration settings to the file (see Option A in configuration section)
+4. Insert the SD card into your M5Stack before powering on
+
 ### Starting the Device
 
 1. Power on your M5Stack
 2. The device will:
+   - Check for SD card and load configuration (displays "SD config loaded!" or "Using secrets.h")
    - Connect to WiFi (displays connection status)
    - Connect to NTRIP caster
    - Authenticate with the caster
    - Begin receiving and forwarding RTCM data
+
+**Note**: If SD card configuration loading fails, the device automatically falls back to compiled-in `secrets.h` settings.
 
 ### Display Information
 
@@ -161,12 +202,22 @@ pio device monitor
 ## Troubleshooting
 
 ### Cannot Connect to WiFi
-- Verify SSID and password in `secrets.h`
+- Verify SSID and password in `config.txt` (SD card) or `secrets.h`
+- Check SD card is properly inserted and formatted (FAT32)
 - Check WiFi signal strength
 - Ensure 2.4GHz WiFi network (ESP32 doesn't support 5GHz)
+- Check serial monitor for config loading messages
+
+### SD Card Not Detected
+- Ensure SD card is formatted as FAT32 (not exFAT or NTFS)
+- Verify SD card is properly inserted into M5Stack
+- Check that `config.txt` is in the root directory (not in a subfolder)
+- Try a different SD card (some cards may have compatibility issues)
+- Check serial monitor - device should show "SD config loaded!" or error message
+- Device will automatically fall back to `secrets.h` if SD loading fails
 
 ### Cannot Connect to NTRIP Server
-- Verify NTRIP host, port, and credentials in `secrets.h`
+- Verify NTRIP host, port, and credentials in `config.txt` (SD card) or `secrets.h`
 - Check that mountpoint exists and is accessible
 - Verify internet connectivity
 - Some NTRIP services require valid subscription
@@ -196,12 +247,15 @@ M5NtripClient/
 ├── src/
 │   ├── main.cpp        # Main application logic
 │   ├── ntrip.cpp       # NTRIP client implementation
+│   ├── config.cpp      # SD card configuration loader
 │   └── base64.cpp      # Base64 encoding for authentication
 ├── include/
 │   ├── ntrip.h         # NTRIP client header
+│   ├── config.h        # Configuration loader header
 │   ├── base64.h        # Base64 encoding header
 │   └── Secrets/
-│       └── secrets.h.template  # Template for credentials
+│       └── secrets.h.template  # Template for credentials (fallback)
+├── config.txt.template # Template for SD card configuration
 ├── platformio.ini      # PlatformIO configuration
 └── p9r+m5stack.ucf     # u-blox receiver configuration
 ```

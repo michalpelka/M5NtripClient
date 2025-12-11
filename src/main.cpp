@@ -3,11 +3,14 @@
 #include <WiFi.h>
 #include "Secrets/secrets.h"
 #include "ntrip.h"
-
+#include "config.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
+
+// Global configuration settings
+config::Settings appSettings;
 
 SemaphoreHandle_t ggaMutex;
 String ggaSentence = "";
@@ -177,26 +180,55 @@ void setup() {
   Serial.write("Starting M5NtripClient...\n");
   M5.begin();
   M5.Lcd.print("Booted!");
+  
+  // Try to load configuration from SD card
+  M5.Lcd.print("\nChecking SD card...");
+  if (config::loadFromSD(appSettings)) {
+    M5.Lcd.print("\nSD config loaded!");
+  } else {
+    M5.Lcd.print("\nUsing secrets.h");
+    // Fallback to secrets.h
+    appSettings.wifi_ssid = secrets::SSID;
+    appSettings.wifi_password = secrets::PASSWORD;
+    appSettings.ntrip_host = secrets::NTRIP_HOST;
+    appSettings.ntrip_port = secrets::NTRIP_PORT;
+    appSettings.ntrip_mountpoint = secrets::NTRIP_MOUNTPOINT;
+    appSettings.ntrip_username = secrets::NTRIP_USERNAME;
+    appSettings.ntrip_password = secrets::NTRIP_PASSWORD;
+    appSettings.valid = true;
+  }
+  M5.Lcd.printf("\nUsing SSID: %s", appSettings.wifi_ssid.c_str());
+  M5.Lcd.printf("\nUsing NTRIP Host: %s : %d", appSettings.ntrip_host.c_str(), appSettings.ntrip_port);
+  M5.Lcd.printf("\nUsing NTRIP Mountpoint: %s", appSettings.ntrip_mountpoint.c_str());
+  M5.Lcd.printf("\nUsing NTRIP Username: %s", appSettings.ntrip_username.c_str());  
+  
+  
   // Connect to WiFi
-  M5.Lcd.print("\nConnecting to WiFi");
-  WiFi.begin(secrets::SSID, secrets::PASSWORD);
+  M5.Lcd.printf("\nConnecting to WiFi %s", appSettings.wifi_ssid.c_str());
+  WiFi.begin(appSettings.wifi_ssid.c_str(), appSettings.wifi_password.c_str());
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     M5.Lcd.print(".");
   }
   Serial.write("Connected to WiFi!");
-  M5.Lcd.printf("\nConnected to WiFi! %s", secrets::SSID);
+  M5.Lcd.printf("\nConnected to WiFi! %s", appSettings.wifi_ssid.c_str());
   M5.Lcd.print("\nIP Address: ");
   M5.Lcd.print(WiFi.localIP());
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   M5.Lcd.print("\nConnecting to NTRIP at ");
-  M5.Lcd.print(secrets::NTRIP_HOST);
+  M5.Lcd.print(appSettings.ntrip_host.c_str());
   M5.Lcd.print(":");
-  M5.Lcd.print(secrets::NTRIP_PORT);
+  M5.Lcd.print(appSettings.ntrip_port);
 
   // ntrip client initialization example
-  ntrip::init_ntrip_client(secrets::NTRIP_HOST, secrets::NTRIP_PORT, secrets::NTRIP_MOUNTPOINT, secrets::NTRIP_USERNAME, secrets::NTRIP_PASSWORD);
+  ntrip::init_ntrip_client(
+    appSettings.ntrip_host.c_str(),
+    appSettings.ntrip_port,
+    appSettings.ntrip_mountpoint.c_str(),
+    appSettings.ntrip_username.c_str(),
+    appSettings.ntrip_password.c_str()
+  );
   while (!ntrip::connect_ntrip_client()) {
     delay(2000); // Retry every 2 seconds
     M5.Lcd.print(".");
@@ -205,11 +237,10 @@ void setup() {
   M5.Lcd.print("\nNTRIP Connected!");
   ntrip::authenticate_ntrip_client();
   M5.Lcd.print("\nNTRIP Authenticated!");
-
+  delay(2000);
   M5.Lcd.clear();
   M5.Lcd.setCursor(0, 0);
-  M5.Lcd.print("NTRIP Client Running\n");
-  delay(2000);
+
 
   // Create mutexes
   ggaMutex = xSemaphoreCreateMutex();
