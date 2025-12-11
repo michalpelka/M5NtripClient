@@ -1,0 +1,13 @@
+# M5NtripClient Configuration File
+# Place this file as 'config.txt' in the root of your SD card
+
+# WiFi Settings
+WIFI_SSID=your_wifi_ssid
+WIFI_PASSWORD=your_wifi_password
+
+# NTRIP Settings
+NTRIP_HOST=ntrip.example.com
+NTRIP_PORT=2101
+NTRIP_MOUNTPOINT=MOUNTPOINT
+NTRIP_USERNAME=username
+NTRIP_PASSWORD=password
