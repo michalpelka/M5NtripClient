@@ -145,11 +145,10 @@ The M5Stack display shows:
   - 🟢 Green-Yellow (4): RTK Fixed
 - **GGA Sentence**: Current NMEA GGA sentence from receiver
 
-### Button Controls
+### Power off
 
-- **Button A (Left)**: Hold to power off the device
-- **Button B (Middle)**: Hold to force NTRIP reconnection
-- **Button C (Right)**: Not currently assigned
+Double click red button on the side of M5Stack.
+
 
 ### Serial Monitor
 
