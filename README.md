@@ -141,8 +141,8 @@ The M5Stack display shows:
   - 🔴 Red (0): Invalid/No fix
   - 🟡 Yellow (1): GPS fix
   - 🔵 Cyan (2): DGPS fix
-  - 🟢 Green (4): RTK Float
-  - 🟢 Green-Yellow (5): RTK Fixed
+  - 🟢 Green (5): RTK Float
+  - 🟢 Green-Yellow (4): RTK Fixed
 - **GGA Sentence**: Current NMEA GGA sentence from receiver
 
 ### Button Controls
